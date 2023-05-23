@@ -1,4 +1,4 @@
-import mongoose, { mongo } from "mongoose";
+import mongoose from "mongoose";
 
 const Schema = mongoose.Schema;
 
@@ -14,7 +14,11 @@ const messageSchema = new Schema(
     reciverId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "register",
-    }
+    },
+    deleted: {
+      type: Boolean,
+      default:false
+    },
   },
   {
     timestamps: true,

@@ -20,19 +20,20 @@ export default {
     },
 
     groupAllMessage: async (_, { groupId }) => {
-      
-      const groupAllMessage = await GroupMessage.find({groupId})
+      const groupAllMessage = await GroupMessage.find({
+        $and: [{ groupId }, { deleted: false }],
+      })
         .populate("userId")
         .populate({
-          path : "groupId",
-          populate : [{
-            path:"member"
-          }]
+          path: "groupId",
+          populate: [
+            {
+              path: "member",
+            },
+          ],
         });
 
-
-        return groupAllMessage
-
+      return groupAllMessage;
     },
   },
 
@@ -48,10 +49,22 @@ export default {
     },
 
     createGroupMessage: async (_, { input }) => {
-
       const groupMessage = await GroupMessage.create(input);
 
       return groupMessage;
+    },
+
+    deleteGroupMessage: async (_, { input }) => {
+      await GroupMessage.updateMany(
+        {
+          _id: { $in: input.messageId },
+        },
+        { deleted: true }
+      );
+
+      return {
+        info: "message has been deleted",
+      };
     },
   },
 };

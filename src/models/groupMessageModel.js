@@ -15,9 +15,13 @@ const groupMessageSchema = new Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "group",
     },
+    deleted: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
-    timestamps: true,   
+    timestamps: true,
   }
 );
 

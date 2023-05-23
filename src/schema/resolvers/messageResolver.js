@@ -4,9 +4,14 @@ export default {
   Query: {
     userMessage: async (_, { filter }) => {
       const allMessage = await Message.find({
-        $or: [
-          { userId: filter.userId, reciverId: filter.reciverId },
-          { userId: filter.reciverId, reciverId: filter.userId },
+        $and: [
+          { deleted: false },
+          {
+            $or: [
+              { userId: filter.userId, reciverId: filter.reciverId },
+              { userId: filter.reciverId, reciverId: filter.userId },
+            ],
+          },
         ],
       })
         .populate("userId")
@@ -36,12 +41,17 @@ export default {
     },
 
     deleteMessage: async (_, { input }) => {
+      //  await Message.findByIdAndDelete(input.messageId) // single message delete
 
-       await Message.findByIdAndDelete(input.messageId)
+      await Message.updateMany({
+        _id: { $in: input.messageId },
+      },
+      {deleted:true}
+      );
 
       return {
-        info : "message has been deleted"
-      }
+        info: "message has been deleted",
+      };
     },
   },
 };

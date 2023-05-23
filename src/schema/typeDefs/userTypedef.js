@@ -18,10 +18,12 @@ type UserTotalDetails {
 }
 
 type UserMessage {
+    id:ID
     createdAt: Date
     userId:User
     reciverId:User
     message:String
+    deleted:Boolean
 }
 
 type DeleteMessage {
@@ -57,8 +59,7 @@ input inputLogin {
 } 
 
 input inputDeleteMessage {
-    messageId:ID
-    deleterId:ID
+    messageId:[ID]
 }
 
 type Query {

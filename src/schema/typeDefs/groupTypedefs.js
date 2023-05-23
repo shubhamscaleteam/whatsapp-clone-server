@@ -19,13 +19,20 @@ type GroupData {
 }
 
 type GroupAllMessage {
+    id:ID
     createdAt: Date
     message: String
     userId: User
     groupId: GroupData
+    deleted: Boolean, 
+}
+
+type DeleteMessage {
+    info:String
 }
 
 type GroupMessage {
+    id:ID
     createdAt: Date
     message: String
     userId: ID
@@ -45,6 +52,11 @@ input messageOfgroup {
     groupId: ID
 }
 
+
+input inputGroupDeleteMessage {
+    messageId:[ID]
+}
+
 type Query {
    userAllGroup(userId: ID!): [GroupData]
    groupbyId(groupId: ID!):GroupData
@@ -54,6 +66,7 @@ type Query {
 type Mutation {
     createGroupOfUser(input:Group ):GroupData
     createGroupMessage(input:messageOfgroup):GroupMessage
+    deleteGroupMessage(input:inputGroupDeleteMessage):DeleteMessage
 }
 
 `;
