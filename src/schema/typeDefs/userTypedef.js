@@ -77,4 +77,8 @@ type Mutation {
     forgetPassword(email:String!):UserTotalDetails
     deleteMessage(input:inputDeleteMessage):DeleteMessage
 }
+
+type Subscription {
+    messageCreated:UserMessage
+}
 `;
