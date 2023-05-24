@@ -1,4 +1,7 @@
 import Message from "../../models/messageModel.js";
+import { PubSub } from "graphql-subscriptions";
+
+const pubsub = new PubSub();
 
 export default {
   Query: {
@@ -37,16 +40,21 @@ export default {
 
       await messagebyUser.populate("reciverId");
 
+      pubsub.publish("MESSAGE_CREATED", {
+        messageCreated: messagebyUser,
+      });
+
       return messagebyUser;
     },
 
     deleteMessage: async (_, { input }) => {
       //  await Message.findByIdAndDelete(input.messageId) // single message delete
 
-      await Message.updateMany({
-        _id: { $in: input.messageId },
-      },
-      {deleted:true}
+      await Message.updateMany(
+        {
+          _id: { $in: input.messageId },
+        },
+        { deleted: true }
       );
 
       return {
@@ -54,4 +62,12 @@ export default {
       };
     },
   },
+
+  Subscription : {
+    messageCreated : {
+       subscribe : () => pubsub.asyncIterator('MESSAGE_CREATED')
+    }
+  }
 };
+
+

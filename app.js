@@ -8,6 +8,9 @@ import http from "http";
 import cors from "cors";
 import bodyParser from "body-parser";
 import jwt from "jsonwebtoken";
+import { WebSocketServer } from "ws";
+import { useServer } from "graphql-ws/lib/use/ws";
+import { makeExecutableSchema } from "@graphql-tools/schema";
 
 // *** imported files...!!
 
@@ -18,30 +21,23 @@ const port = process.env.PORT || 4000;
 const app = express();
 const httpServer = http.createServer(app);
 const secret_key = process.env.SECRET_KEY;
+const schema = makeExecutableSchema({ typeDefs, resolvers });
 
 app.use(express.json());
 
-//*** create context to receive headers..!!
+// *** websoket server
 
-// const context = async ({ req }) => {
+const wsServer = new WebSocketServer({
+  server: httpServer,
+  path: "/graphql",
+});
 
-//   const  token  = req.headers.authorization;
-
-//   if (token) {
-
-//     const decode = await jwt.verify(token, secret_key);
-
-//     const { id } = decode;
-
-//     return { id };
-//   }
-// };
+const serverCleanup = useServer({ schema }, wsServer);
 
 // ***setup apollo-server...!!
 
 const server = new ApolloServer({
-  typeDefs,
-  resolvers,
+  schema,
   introspection: true,
   formatError: (formattedError, error) => {
     // Return a different error message
@@ -64,7 +60,18 @@ const server = new ApolloServer({
     }
     return formattedError;
   },
-  plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
+  plugins: [
+    ApolloServerPluginDrainHttpServer({ httpServer }),
+    {
+      async serverWillStart() {
+        return {
+          async drainServer() {
+            await serverCleanup.dispose();
+          },
+        };
+      },
+    },
+  ],
 });
 
 await server.start();
