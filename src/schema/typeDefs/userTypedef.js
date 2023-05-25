@@ -24,6 +24,7 @@ type UserMessage {
     reciverId:User
     message:String
     deleted:Boolean
+    isread:Boolean
 }
 
 type DeleteMessage {
@@ -80,5 +81,7 @@ type Mutation {
 
 type Subscription {
     messageCreated:UserMessage
+    deleteMessage:DeleteMessage
+    readMessage:[UserMessage]
 }
 `;

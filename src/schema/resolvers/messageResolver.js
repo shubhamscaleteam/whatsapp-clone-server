@@ -6,6 +6,11 @@ const pubsub = new PubSub();
 export default {
   Query: {
     userMessage: async (_, { filter }) => {
+      console.log(
+        "🚀 ~ file: messageResolver.js:9 ~ userMessage: ~ filter:",
+        filter
+      );
+
       const allMessage = await Message.find({
         $and: [
           { deleted: false },
@@ -19,6 +24,21 @@ export default {
       })
         .populate("userId")
         .populate("reciverId");
+
+      await Message.updateMany(
+        {
+          $and: [
+            { deleted: false },
+
+            { userId: filter.reciverId, reciverId: filter.userId },
+          ],
+        },
+        { isread: true }
+      );
+
+      pubsub.publish("ALL_MESSAGE", {
+        readMessage: allMessage,
+      });
 
       return allMessage;
     },
@@ -57,17 +77,37 @@ export default {
         { deleted: true }
       );
 
+      pubsub.publish("DELETE_MESSAGE", {
+        deleteMessage: "message deleted",
+      });
+
       return {
         info: "message has been deleted",
       };
     },
   },
 
-  Subscription : {
-    messageCreated : {
-       subscribe : () => pubsub.asyncIterator('MESSAGE_CREATED')
-    }
-  }
+  Subscription: {
+    readMessage: {
+      subscribe: () => {
+        const pubsubSubscripation = pubsub.asyncIterator("ALL_MESSAGE");
+
+        return pubsubSubscripation;
+      },
+    },
+    messageCreated: {
+      subscribe: () => {
+        const pubsubSubscripation = pubsub.asyncIterator("MESSAGE_CREATED");
+
+        return pubsubSubscripation;
+      },
+    },
+    deleteMessage: {
+      subscribe: () => {
+        const pubsubSubscripation = pubsub.asyncIterator("DELETE_MESSAGE");
+
+        return pubsubSubscripation;
+      },
+    },
+  },
 };
-
-

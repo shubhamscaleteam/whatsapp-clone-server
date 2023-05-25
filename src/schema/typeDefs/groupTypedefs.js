@@ -37,6 +37,7 @@ type GroupMessage {
     message: String
     userId: ID
     groupId: ID
+    deleted: Boolean
 }
 
 
@@ -67,6 +68,11 @@ type Mutation {
     createGroupOfUser(input:Group ):GroupData
     createGroupMessage(input:messageOfgroup):GroupMessage
     deleteGroupMessage(input:inputGroupDeleteMessage):DeleteMessage
+}
+
+type Subscription {
+    groupMessageCreated:GroupMessage
+    groupDeleteMessage:DeleteMessage
 }
 
 `;

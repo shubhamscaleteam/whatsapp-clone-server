@@ -1,5 +1,8 @@
 import GroupMessage from "../../models/groupMessageModel.js";
 import Group from "../../models/groupModel.js";
+import { PubSub } from "graphql-subscriptions";
+
+const pubsub = new PubSub();
 
 export default {
   Query: {
@@ -51,6 +54,10 @@ export default {
     createGroupMessage: async (_, { input }) => {
       const groupMessage = await GroupMessage.create(input);
 
+      pubsub.publish("GROUP_MESSAGE", {
+        groupMessageCreated: groupMessage,
+      });
+
       return groupMessage;
     },
 
@@ -62,9 +69,30 @@ export default {
         { deleted: true }
       );
 
+      pubsub.publish("DELETE_GROUP_MESSAGE");
+
       return {
         info: "message has been deleted",
       };
+    },
+  },
+
+  Subscription: {
+    groupMessageCreated: {
+      subscribe: () => {
+        const pubsubSubscripation = pubsub.asyncIterator("GROUP_MESSAGE");
+
+        return pubsubSubscripation;
+      },
+    },
+    groupDeleteMessage: {
+      subscribe: () => {
+        const pubsubSubscripation = pubsub.asyncIterator(
+          "DELETE_GROUP_MESSAGE"
+        );
+
+        return pubsubSubscripation;
+      },
     },
   },
 };
