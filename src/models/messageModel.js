@@ -17,7 +17,11 @@ const messageSchema = new Schema(
     },
     deleted: {
       type: Boolean,
-      default:false
+      default: false,
+    },
+    isread: {
+      type: Boolean,
+      default: false,
     },
   },
   {
