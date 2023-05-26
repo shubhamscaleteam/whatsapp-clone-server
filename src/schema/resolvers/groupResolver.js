@@ -22,9 +22,9 @@ export default {
       return groupById;
     },
 
-    groupAllMessage: async (_, { groupId }) => {
+    groupAllMessage: async (_, { groupId, userId }) => {
       const groupAllMessage = await GroupMessage.find({
-        $and: [{ groupId }, { deleted: false }],
+        $and: [{ deletedBy: { $ne: userId } }, { groupId }],
       })
         .populate("userId")
         .populate({
@@ -35,7 +35,6 @@ export default {
             },
           ],
         });
-
       return groupAllMessage;
     },
   },
@@ -62,11 +61,13 @@ export default {
     },
 
     deleteGroupMessage: async (_, { input }) => {
+      console.log(input);
+
       await GroupMessage.updateMany(
         {
           _id: { $in: input.messageId },
         },
-        { deleted: true }
+        { $set: { deleted: true }, $push: { deletedBy: input.deletedBy } }
       );
 
       pubsub.publish("DELETE_GROUP_MESSAGE");

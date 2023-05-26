@@ -19,6 +19,11 @@ const groupMessageSchema = new Schema(
       type: Boolean,
       default: false,
     },
+    deletedBy: {
+      type: [mongoose.Schema.Types.ObjectId],
+      ref: "register",
+      default: null,
+    },
   },
   {
     timestamps: true,

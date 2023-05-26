@@ -6,14 +6,9 @@ const pubsub = new PubSub();
 export default {
   Query: {
     userMessage: async (_, { filter }) => {
-      console.log(
-        "🚀 ~ file: messageResolver.js:9 ~ userMessage: ~ filter:",
-        filter
-      );
-
       const allMessage = await Message.find({
         $and: [
-          { deleted: false },
+          { deletedBy: { $ne: filter.userId } },
           {
             $or: [
               { userId: filter.userId, reciverId: filter.reciverId },
@@ -23,7 +18,8 @@ export default {
         ],
       })
         .populate("userId")
-        .populate("reciverId");
+        .populate("reciverId")
+        .populate("deletedBy");
 
       await Message.updateMany(
         {
@@ -70,11 +66,11 @@ export default {
     deleteMessage: async (_, { input }) => {
       //  await Message.findByIdAndDelete(input.messageId) // single message delete
 
-      await Message.updateMany(
+        await Message.updateMany(
         {
           _id: { $in: input.messageId },
         },
-        { deleted: true }
+        { $set: { deleted: true }, $push: { deletedBy: input.deletedBy } }
       );
 
       pubsub.publish("DELETE_MESSAGE", {

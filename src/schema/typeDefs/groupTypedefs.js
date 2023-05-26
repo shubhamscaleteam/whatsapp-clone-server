@@ -53,19 +53,19 @@ input messageOfgroup {
     groupId: ID
 }
 
-
 input inputGroupDeleteMessage {
     messageId:[ID]
+    deletedBy:[ID]
 }
 
 type Query {
    userAllGroup(userId: ID!): [GroupData]
    groupbyId(groupId: ID!):GroupData
-   groupAllMessage(groupId: ID!):[GroupAllMessage]
+   groupAllMessage(groupId: ID!,userId:ID):[GroupAllMessage]
    }
 
 type Mutation {
-    createGroupOfUser(input:Group ):GroupData
+    createGroupOfUser(input:Group):GroupData
     createGroupMessage(input:messageOfgroup):GroupMessage
     deleteGroupMessage(input:inputGroupDeleteMessage):DeleteMessage
 }
