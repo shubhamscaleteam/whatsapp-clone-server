@@ -15,6 +15,7 @@ type UserTotalDetails {
     userName: String!
     phoneno:Number!
     email:String!
+    password:String
 }
 
 type UserMessage {
@@ -24,6 +25,7 @@ type UserMessage {
     reciverId:User
     message:String
     deleted:Boolean
+    deletedBy:User
     isread:Boolean
 }
 
@@ -61,6 +63,12 @@ input inputLogin {
 
 input inputDeleteMessage {
     messageId:[ID]
+    deletedBy:[ID]
+}
+
+input inputNewPassword {
+    newPassword:String!
+    confirmPassword:String!
 }
 
 type Query {
@@ -68,15 +76,15 @@ type Query {
     userById(id:ID!): User
     allUser: [User]
    userMessage(filter:filterData): [UserMessage]
-
 }
 
 type Mutation {
     registerUser(input: inputRegister!) : User
     loginUser(input: inputLogin!): Token
     createMessage(input:message):UserMessage
-    forgetPassword(email:String!):UserTotalDetails
     deleteMessage(input:inputDeleteMessage):DeleteMessage
+    forgetPassword(email:String!):UserTotalDetails
+    newPassword(input:inputNewPassword):UserTotalDetails
 }
 
 type Subscription {

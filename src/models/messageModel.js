@@ -19,6 +19,11 @@ const messageSchema = new Schema(
       type: Boolean,
       default: false,
     },
+    deletedBy: {
+      type: [mongoose.Schema.Types.ObjectId],
+      ref: "register",
+      default: null,
+    },
     isread: {
       type: Boolean,
       default: false,

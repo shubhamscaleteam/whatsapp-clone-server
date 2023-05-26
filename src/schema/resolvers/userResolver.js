@@ -2,9 +2,23 @@ import Register from "../../models/registerModel.js";
 import { GraphQLError } from "graphql";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-
+import nodemailer from "nodemailer";
 
 const secret_key = process.env.SECRET_KEY;
+
+const admin_email = process.env.ADMIN_EMAIL;
+
+const admin_password = process.env.ADMIN_PASSWORD;
+
+let transporter = nodemailer.createTransport({
+  host: "smtp.ethereal.email",
+  port: 465,
+  secure: true, // true for 465, false for other ports
+  auth: {
+    user: admin_email, // generated ethereal user
+    pass: admin_password, // generated ethereal password
+  },
+});
 
 export default {
   Query: {
@@ -138,16 +152,8 @@ export default {
           },
         });
       }
-    },
 
-    createGroupOfUser: async (_, { input }) => {
-      const groupData = await Group.create(input);
-
-      await groupData.populate("creator")
-
-      await groupData.populate("member")
-
-      return groupData;
+      return findUser;
     },
   },
 };
