@@ -84,7 +84,7 @@ type Mutation {
     createMessage(input:message):UserMessage
     deleteMessage(input:inputDeleteMessage):DeleteMessage
     forgetPassword(email:String!):UserTotalDetails
-    newPassword(input:inputNewPassword):UserTotalDetails
+    newPassword(input:inputNewPassword, token:String):UserTotalDetails
 }
 
 type Subscription {

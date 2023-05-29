@@ -10,8 +10,10 @@ const admin_email = process.env.ADMIN_EMAIL;
 
 const admin_password = process.env.ADMIN_PASSWORD;
 
+const client_port = 3000;
+
 let transporter = nodemailer.createTransport({
-  host: "smtp.ethereal.email",
+  host: "smtp.gmail.com",
   port: 465,
   secure: true, // true for 465, false for other ports
   auth: {
@@ -153,7 +155,66 @@ export default {
         });
       }
 
+      const userId = await findUser.id;
+
+      const payload = {
+        id: userId,
+        email: findUser.email,
+      };
+
+      const token = await jwt.sign(payload, secret_key, {
+        expiresIn: "24h",
+      });
+
+      const info = transporter.sendMail({
+        from: admin_email, // sender address
+        to: findUser.email, // list of receivers
+        subject: "new password...!!", // Subject line
+        html: `<a href="http://192.168.0.164:${client_port}/newpassword?token=${token}">Click here to reset-password</a>`,
+      });
+
       return findUser;
+    },
+
+    newPassword: async (_, { input, token }) => {
+      const decode = await jwt.decode(token, secret_key);
+
+      if (!decode) {
+        throw new GraphQLError("Invalid token", {
+          extensions: {
+            code: 404,
+          },
+        });
+      }
+
+      const { id } = decode;
+
+      const user = await Register.findById(id);
+
+      const cnfPassword = input.newPassword === input.confirmPassword;
+
+      if (!cnfPassword) {
+        throw new GraphQLError(
+          "Your password and confirmation password do not match",
+          {
+            extensions: {
+              code: 401,
+            },
+          }
+        );
+      }
+
+      const bcryptPassword = await bcrypt.hash(input.newPassword, 12);
+
+      user.id = user.id;
+      user.userName = user.userName;
+      user.phoneno = user.phoneno;
+      user.email = user.email;
+      user.password = bcryptPassword;
+
+      const updatedPassword = await user.save();
+
+      return updatedPassword;
     },
   },
 };
