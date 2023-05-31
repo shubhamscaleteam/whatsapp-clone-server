@@ -216,5 +216,6 @@ export default {
 
       return updatedPassword;
     },
+
   },
 };

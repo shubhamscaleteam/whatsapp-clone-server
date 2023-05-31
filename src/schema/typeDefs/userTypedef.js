@@ -8,6 +8,7 @@ type User {
     userName: String!
     phoneno:Number!
     email:String!
+    profilePicture:String
 }
 
 type UserTotalDetails {
@@ -47,6 +48,7 @@ input inputRegister {
     phoneno:Number!
     email:String!
     password:String!
+    profilePicture:String!
 } 
 
 input message {
