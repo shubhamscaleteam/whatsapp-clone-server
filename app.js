@@ -23,6 +23,7 @@ const httpServer = http.createServer(app);
 const secret_key = process.env.SECRET_KEY;
 const schema = makeExecutableSchema({ typeDefs, resolvers });
 
+app.use(express.json({ limit: "50mb" }));
 app.use(express.json());
 
 // *** websoket server
@@ -33,6 +34,9 @@ const wsServer = new WebSocketServer({
 });
 
 const serverCleanup = useServer({ schema }, wsServer);
+
+
+
 
 // ***setup apollo-server...!!
 

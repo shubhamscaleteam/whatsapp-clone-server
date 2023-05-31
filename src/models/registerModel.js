@@ -19,6 +19,9 @@ const registerSchema = new Schema(
     password: {
       type: String,
     },
+    profilePicture: {
+      type: String,
+    },
   },
   {
     timestamps: true,
