@@ -61,7 +61,6 @@ export default {
     },
 
     deleteGroupMessage: async (_, { input }) => {
-      console.log(input);
 
       await GroupMessage.updateMany(
         {

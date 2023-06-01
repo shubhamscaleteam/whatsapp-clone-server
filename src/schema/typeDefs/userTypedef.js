@@ -12,18 +12,18 @@ type User {
 }
 
 type UserTotalDetails {
-    id:ID!
-    userName: String!
-    phoneno:Number!
-    email:String!
+    id:ID
+    userName: String
+    phoneno:Number
+    email:String
     password:String
 }
 
 type UserMessage {
     id:ID
     createdAt: Date
-    userId:User
-    reciverId:User
+    userId:UserTotalDetails
+    reciverId:UserTotalDetails
     message:String
     deleted:Boolean
     deletedBy:User
@@ -52,7 +52,6 @@ input inputRegister {
 } 
 
 input message {
-    createdAt: Date
     userId:ID
     reciverId:ID
     message:String
@@ -66,6 +65,12 @@ input inputLogin {
 input inputDeleteMessage {
     messageId:[ID]
     deletedBy:[ID]
+}
+
+input updateProfile {
+    id:ID!
+    userName:String
+    profilePicture:String
 }
 
 input inputNewPassword {
@@ -82,6 +87,7 @@ type Query {
 
 type Mutation {
     registerUser(input: inputRegister!) : User
+    updateUserProfile(input:updateProfile): User
     loginUser(input: inputLogin!): Token
     createMessage(input:message):UserMessage
     deleteMessage(input:inputDeleteMessage):DeleteMessage

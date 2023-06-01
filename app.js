@@ -11,6 +11,7 @@ import jwt from "jsonwebtoken";
 import { WebSocketServer } from "ws";
 import { useServer } from "graphql-ws/lib/use/ws";
 import { makeExecutableSchema } from "@graphql-tools/schema";
+import path from "path";
 
 // *** imported files...!!
 
@@ -19,10 +20,11 @@ import resolvers from "./src/schema/resolvers/indexResolver.js";
 
 const port = process.env.PORT || 4000;
 const app = express();
-const httpServer = http.createServer(app);
+const httpServer = http.createServer(app)
 const secret_key = process.env.SECRET_KEY;
 const schema = makeExecutableSchema({ typeDefs, resolvers });
 
+// app.use(express.static(path.join("public")));
 app.use(express.json({ limit: "50mb" }));
 app.use(express.json());
 
@@ -34,9 +36,6 @@ const wsServer = new WebSocketServer({
 });
 
 const serverCleanup = useServer({ schema }, wsServer);
-
-
-
 
 // ***setup apollo-server...!!
 
