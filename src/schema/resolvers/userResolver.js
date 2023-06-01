@@ -3,6 +3,8 @@ import { GraphQLError } from "graphql";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
+import fs from "fs";
+import path from "path";
 
 const secret_key = process.env.SECRET_KEY;
 
@@ -83,7 +85,23 @@ export default {
         });
       }
 
-      const hashpw = await bcrypt.hash(input.password, 12);
+      // const uploadPath = path.join( "../../public/uploads");
+
+      // if (!fs.existsSync(uploadPath)) {
+      //   fs.mkdirSync(uploadPath);
+      // }
+      // const userProfileImage = await input.profilePicture;
+
+      // const base64Data = userProfileImage.replace(
+      //   /^data:image\/\w+;base64,/,
+      //   ""
+      // );
+
+      // const buffer = Buffer.from(base64Data, "base64");
+
+      // fs.writeFileSync(uploadPath, buffer, "base64");
+
+      // const hashpw = await bcrypt.hash(input.password, 12);
 
       const newUser = new Register({
         ...input,
@@ -217,5 +235,34 @@ export default {
       return updatedPassword;
     },
 
+    updateUserProfile: async (_, { input }) => {
+      const findUser = await Register.findById(input.id);
+
+      if (!findUser) {
+        throw new GraphQLError("invalid...", {
+          extensions: {
+            code: 404,
+          },
+        });
+      }
+
+      findUser.id = findUser.id;
+      findUser.userName = findUser.userName;
+      findUser.phoneno = findUser.phoneno;
+      findUser.email = findUser.email;
+      findUser.password = findUser.password;
+      findUser.profilePicture = findUser.profilePicture;
+
+      if (input.userName) {
+        findUser.userName = input.userName;
+      }
+      if (input.profilePicture) {
+        findUser.profilePicture = input.profilePicture;
+      }
+      
+      const newUser = await findUser.save();
+
+      return newUser;
+    },
   },
 };
