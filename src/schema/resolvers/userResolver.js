@@ -5,6 +5,7 @@ import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
 import fs from "fs";
 import path from "path";
+import { PubSub } from "graphql-subscriptions";
 
 const secret_key = process.env.SECRET_KEY;
 
@@ -13,6 +14,8 @@ const admin_email = process.env.ADMIN_EMAIL;
 const admin_password = process.env.ADMIN_PASSWORD;
 
 const client_port = 3000;
+
+const pubsub = new PubSub();
 
 let transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
@@ -85,27 +88,40 @@ export default {
         });
       }
 
-      // const uploadPath = path.join( "../../public/uploads");
+      const userProfileImage = await input.profilePicture;
 
-      // if (!fs.existsSync(uploadPath)) {
-      //   fs.mkdirSync(uploadPath);
-      // }
-      // const userProfileImage = await input.profilePicture;
+      const matches = userProfileImage.match(/^data:image\/([a-z]+);base64,/);
+      const fileExtension = matches[1];
 
-      // const base64Data = userProfileImage.replace(
-      //   /^data:image\/\w+;base64,/,
-      //   ""
-      // );
+      const fileType = userProfileImage.substring(
+        "data:".length,
+        userProfileImage.indexOf("/")
+      );
 
-      // const buffer = Buffer.from(base64Data, "base64");
+      const regex = new RegExp(
+        `^data:${fileType}\/${fileExtension};base64,`,
+        "gi"
+      );
+      const base64Data = userProfileImage.replace(regex, "");
 
-      // fs.writeFileSync(uploadPath, buffer, "base64");
+      const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
 
-      // const hashpw = await bcrypt.hash(input.password, 12);
+      const newFileName = uniqueSuffix + "." + fileExtension;
+
+      const uploadPath = path.join(process.cwd(), "/public/uploads/");
+
+      if (!fs.existsSync(uploadPath)) {
+        fs.mkdirSync(uploadPath);
+      }
+
+      fs.writeFileSync(uploadPath + newFileName, base64Data, "base64");
+
+      const hashpw = await bcrypt.hash(input.password, 12);
 
       const newUser = new Register({
         ...input,
         password: hashpw,
+        profilePicture: "http://localhost:4000/uploads/" + newFileName,
       });
 
       const User = await newUser.save();
@@ -257,12 +273,55 @@ export default {
         findUser.userName = input.userName;
       }
       if (input.profilePicture) {
-        findUser.profilePicture = input.profilePicture;
+        const userProfileImage = await input.profilePicture;
+
+        const matches = userProfileImage.match(/^data:image\/([a-z]+);base64,/);
+        const fileExtension = matches[1];
+
+        const fileType = userProfileImage.substring(
+          "data:".length,
+          userProfileImage.indexOf("/")
+        );
+
+        const regex = new RegExp(
+          `^data:${fileType}\/${fileExtension};base64,`,
+          "gi"
+        );
+        const base64Data = userProfileImage.replace(regex, "");
+
+        const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+
+        const newFileName = uniqueSuffix + "." + fileExtension;
+
+        const uploadPath = path.join(process.cwd(), "/public/uploads/");
+
+        if (!fs.existsSync(uploadPath)) {
+          fs.mkdirSync(uploadPath);
+        }
+
+        fs.writeFileSync(uploadPath + newFileName, base64Data, "base64");
+
+        findUser.profilePicture =
+          "http://localhost:4000/uploads/" + newFileName;
       }
-      
+
       const newUser = await findUser.save();
 
+      pubsub.publish("UPDATE_USERPROFILE", {
+        updateUserProfile: newUser,
+      });
+
       return newUser;
+    },
+  },
+
+  Subscription: {
+    updateUserProfile: {
+      subscribe: () => {
+        const pubsubSubscripation = pubsub.asyncIterator("UPDATE_USERPROFILE");
+
+        return pubsubSubscripation;
+      },
     },
   },
 };

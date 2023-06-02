@@ -96,6 +96,7 @@ type Mutation {
 }
 
 type Subscription {
+    updateUserProfile:User
     messageCreated:UserMessage
     deleteMessage:DeleteMessage
     readMessage:[UserMessage]
