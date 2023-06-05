@@ -14,21 +14,21 @@ export default {
       return allGroups;
     },
 
-    groupbyId: async (_, { groupId }) => {
-      const groupById = await Group.findById(groupId)
+    groupbyId: async (_, { reciverId }) => {
+      const groupById = await Group.findById(reciverId)
         .populate("creator")
         .populate("member");
 
       return groupById;
     },
 
-    groupAllMessage: async (_, { groupId, userId }) => {
+    groupAllMessage: async (_, { reciverId, userId }) => {
       const groupAllMessage = await GroupMessage.find({
-        $and: [{ deletedBy: { $ne: userId } }, { groupId }],
+        $and: [{ deletedBy: { $ne: userId } }, { reciverId }],
       })
         .populate("userId")
         .populate({
-          path: "groupId",
+          path: "reciverId",
           populate: [
             {
               path: "member",

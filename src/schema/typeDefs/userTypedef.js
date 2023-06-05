@@ -34,6 +34,10 @@ type DeleteMessage {
     info:String
 }
 
+type forwardInfo {
+    info:String
+} 
+
 input filterData {
     userId:ID
     reciverId:ID
@@ -78,11 +82,19 @@ input inputNewPassword {
     confirmPassword:String!
 }
 
+input ForwardMessage {
+    message:String
+    userId:ID
+    reciverId:[ID]
+    groupId:[ID]
+}
+
 type Query {
     user(email:String!): User
     userById(id:ID!): User
     allUser: [User]
    userMessage(filter:filterData): [UserMessage]
+   singleMessage(id:ID):UserMessage
 }
 
 type Mutation {
@@ -93,6 +105,7 @@ type Mutation {
     deleteMessage(input:inputDeleteMessage):DeleteMessage
     forgetPassword(email:String!):UserTotalDetails
     newPassword(input:inputNewPassword, token:String):UserTotalDetails
+    forwardMessage(input:ForwardMessage):forwardInfo
 }
 
 type Subscription {

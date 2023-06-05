@@ -11,7 +11,6 @@ type User {
 }
 
 type GroupData {
-    createdAt: Date
     id: ID
     userName: String
     creator:User
@@ -23,7 +22,7 @@ type GroupAllMessage {
     createdAt: Date
     message: String
     userId: User
-    groupId: GroupData
+    reciverId: GroupData
     deleted: Boolean, 
 }
 
@@ -36,8 +35,9 @@ type GroupMessage {
     createdAt: Date
     message: String
     userId: ID
-    groupId: ID
+    reciverId: ID
     deleted: Boolean
+    isread:Boolean
 }
 
 
@@ -50,7 +50,7 @@ input Group {
 input messageOfgroup {
     message: String
     userId: ID
-    groupId: ID
+    reciverId: ID
 }
 
 input inputGroupDeleteMessage {
@@ -60,8 +60,8 @@ input inputGroupDeleteMessage {
 
 type Query {
    userAllGroup(userId: ID!): [GroupData]
-   groupbyId(groupId: ID!):GroupData
-   groupAllMessage(groupId: ID!,userId:ID):[GroupAllMessage]
+   groupbyId(reciverId: ID!):GroupData
+   groupAllMessage(reciverId: ID!,userId:ID):[GroupAllMessage]
    }
 
 type Mutation {

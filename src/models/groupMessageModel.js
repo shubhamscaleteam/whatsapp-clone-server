@@ -11,8 +11,8 @@ const groupMessageSchema = new Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "register",
     },
-    groupId: {
-      type: mongoose.Schema.Types.ObjectId,
+    reciverId: {
+      type:[ mongoose.Schema.Types.ObjectId],
       ref: "group",
     },
     deleted: {
@@ -23,6 +23,10 @@ const groupMessageSchema = new Schema(
       type: [mongoose.Schema.Types.ObjectId],
       ref: "register",
       default: null,
+    },
+    isread: {
+      type: Boolean,
+      default: false,
     },
   },
   {
