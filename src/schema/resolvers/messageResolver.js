@@ -1,5 +1,7 @@
+import GroupMessage from "../../models/groupMessageModel.js";
 import Message from "../../models/messageModel.js";
 import { PubSub } from "graphql-subscriptions";
+import Register from "../../models/registerModel.js";
 
 const pubsub = new PubSub();
 
@@ -38,6 +40,22 @@ export default {
 
       return allMessage;
     },
+
+    singleMessage: async (_, { id }) => {
+      const message = await Message.findById(id)
+        .populate("userId")
+        .populate("reciverId");
+
+      if (message === null) {
+        const message = await GroupMessage.findById(id)
+          .populate("userId")
+          .populate("reciverId");
+
+        return message;
+      }
+
+      return message;
+    },
   },
 
   Mutation: {
@@ -66,7 +84,7 @@ export default {
     deleteMessage: async (_, { input }) => {
       //  await Message.findByIdAndDelete(input.messageId) // single message delete
 
-        await Message.updateMany(
+      await Message.updateMany(
         {
           _id: { $in: input.messageId },
         },
@@ -80,6 +98,30 @@ export default {
       return {
         info: "message has been deleted",
       };
+    },
+
+    forwardMessage: async (_, { input }) => {
+      const userMessage = new Object({
+        message: input.message,
+        userId: input.userId,
+        reciverId: input.reciverId,
+      });
+
+      const groupMessage = new Object({
+        message: input.message,
+        userId: input.userId,
+        reciverId: input.groupId,
+      });
+
+      if (userMessage.reciverId.length !== 0) {
+        await Message.create(userMessage);
+      }
+
+      if (groupMessage.reciverId.length !== 0) {
+        await GroupMessage.create(groupMessage);
+      }
+
+      return { info: "message forwared" };
     },
   },
 

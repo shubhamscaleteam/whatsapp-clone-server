@@ -12,7 +12,7 @@ const messageSchema = new Schema(
       ref: "register",
     },
     reciverId: {
-      type: mongoose.Schema.Types.ObjectId,
+      type:[ mongoose.Schema.Types.ObjectId],
       ref: "register",
     },
     deleted: {
