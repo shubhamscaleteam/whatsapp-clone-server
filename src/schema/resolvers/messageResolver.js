@@ -10,7 +10,11 @@ export default {
     userMessage: async (_, { filter }) => {
       const allMessage = await Message.find({
         $and: [
-          { deletedBy: { $ne: filter.userId } },
+          {
+            deletedBy: { $ne: filter.userId },
+            deletedFrom: { $ne: filter.reciverId },
+          },
+
           {
             $or: [
               { userId: filter.userId, reciverId: filter.reciverId },
@@ -88,7 +92,14 @@ export default {
         {
           _id: { $in: input.messageId },
         },
-        { $set: { deleted: true }, $push: { deletedBy: input.deletedBy } }
+        {
+          $set: { deleted: true },
+          $addToSet: {
+            deletedBy: input.deletedBy,
+            deletedFrom: input.deletedFrom,
+          },
+          // $pull: { reciverId: input.deletedFrom },
+        }
       );
 
       pubsub.publish("DELETE_MESSAGE", {
@@ -105,12 +116,14 @@ export default {
         message: input.message,
         userId: input.userId,
         reciverId: input.reciverId,
+        isForward: true,
       });
 
       const groupMessage = new Object({
         message: input.message,
         userId: input.userId,
         reciverId: input.groupId,
+        isForward: true,
       });
 
       if (userMessage.reciverId.length !== 0) {
@@ -120,6 +133,10 @@ export default {
       if (groupMessage.reciverId.length !== 0) {
         await GroupMessage.create(groupMessage);
       }
+
+      pubsub.publish("FORWARD_MESSAGE", {
+        info: "forward",
+      });
 
       return { info: "message forwared" };
     },
@@ -143,6 +160,13 @@ export default {
     deleteMessage: {
       subscribe: () => {
         const pubsubSubscripation = pubsub.asyncIterator("DELETE_MESSAGE");
+
+        return pubsubSubscripation;
+      },
+    },
+    fwardMessage: {
+      subscribe: () => {
+        const pubsubSubscripation = pubsub.asyncIterator("FORWARD_MESSAGE");
 
         return pubsubSubscripation;
       },

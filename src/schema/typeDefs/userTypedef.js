@@ -23,11 +23,13 @@ type UserMessage {
     id:ID
     createdAt: Date
     userId:UserTotalDetails
-    reciverId:UserTotalDetails
+    reciverId:[UserTotalDetails]
     message:String
     deleted:Boolean
     deletedBy:User
+    deletedFrom:User
     isread:Boolean
+    isForward:Boolean
 }
 
 type DeleteMessage {
@@ -57,7 +59,7 @@ input inputRegister {
 
 input message {
     userId:ID
-    reciverId:ID
+    reciverId:[ID]
     message:String
 }
 
@@ -69,6 +71,7 @@ input inputLogin {
 input inputDeleteMessage {
     messageId:[ID]
     deletedBy:[ID]
+    deletedFrom:ID
 }
 
 input updateProfile {
@@ -113,5 +116,6 @@ type Subscription {
     messageCreated:UserMessage
     deleteMessage:DeleteMessage
     readMessage:[UserMessage]
+    fwardMessage:forwardInfo
 }
 `;
