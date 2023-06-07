@@ -164,12 +164,5 @@ export default {
         return pubsubSubscripation;
       },
     },
-    fwardMessage: {
-      subscribe: () => {
-        const pubsubSubscripation = pubsub.asyncIterator("FORWARD_MESSAGE");
-
-        return pubsubSubscripation;
-      },
-    },
   },
 };
