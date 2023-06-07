@@ -116,6 +116,5 @@ type Subscription {
     messageCreated:UserMessage
     deleteMessage:DeleteMessage
     readMessage:[UserMessage]
-    fwardMessage:forwardInfo
 }
 `;
