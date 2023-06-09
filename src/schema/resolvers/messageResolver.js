@@ -1,12 +1,13 @@
 import GroupMessage from "../../models/groupMessageModel.js";
 import Message from "../../models/messageModel.js";
 import { PubSub } from "graphql-subscriptions";
-import Register from "../../models/registerModel.js";
 
 const pubsub = new PubSub();
 
 export default {
   Query: {
+    // *** Login user and user which chat is open message
+
     userMessage: async (_, { filter }) => {
       const allMessage = await Message.find({
         $and: [
@@ -45,6 +46,8 @@ export default {
       return allMessage;
     },
 
+    // *** userMessage with id
+
     singleMessage: async (_, { id }) => {
       const message = await Message.findById(id)
         .populate("userId")
@@ -63,6 +66,8 @@ export default {
   },
 
   Mutation: {
+    // *** create message
+
     createMessage: async (_, { input }, { id }) => {
       // if (!id) {
       //     throw new GraphQLError("Unauthorize...!!", {
@@ -84,6 +89,8 @@ export default {
 
       return messagebyUser;
     },
+
+    // *** delete message
 
     deleteMessage: async (_, { input }) => {
       //  await Message.findByIdAndDelete(input.messageId) // single message delete
@@ -110,6 +117,8 @@ export default {
         info: "message has been deleted",
       };
     },
+
+    // *** forward message
 
     forwardMessage: async (_, { input }) => {
       const userMessage = new Object({
@@ -141,6 +150,8 @@ export default {
       return { info: "message forwared" };
     },
   },
+
+  // *** subsripation
 
   Subscription: {
     readMessage: {

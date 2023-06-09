@@ -2,60 +2,50 @@ import Register from "../../models/registerModel.js";
 import { GraphQLError } from "graphql";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import nodemailer from "nodemailer";
 import fs from "fs";
 import path from "path";
 import { PubSub } from "graphql-subscriptions";
+import { errorHandle } from "./errorHandler.js";
+import { sendMail } from "../../services/sendMail.js";
+import { imageUpload } from "../../services/imageUpload.js";
+
+// *** dynemic url
+
+const domain_url = process.env.DOMAIN_URL;
 
 const secret_key = process.env.SECRET_KEY;
 
-const admin_email = process.env.ADMIN_EMAIL;
-
-const admin_password = process.env.ADMIN_PASSWORD;
-
-const client_port = 3000;
+const port = process.env.PORT;
 
 const pubsub = new PubSub();
 
-let transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 465,
-  secure: true, // true for 465, false for other ports
-  auth: {
-    user: admin_email, // generated ethereal user
-    pass: admin_password, // generated ethereal password
-  },
-});
-
 export default {
   Query: {
+    //*** query for find userBy email */
+
     user: async (_, { email }) => {
       const user = await Register.findOne({ email: email });
 
       if (!user) {
-        throw new GraphQLError("user not exist with such email..!!", {
-          extensions: {
-            code: 404,
-          },
-        });
+        return errorHandle("user not exist with such email..!!", 404);
       }
 
       return user;
     },
 
+    //*** query for find userById */
+
     userById: async (_, { id }) => {
       const findUser = await Register.findById(id);
 
       if (!findUser) {
-        throw new GraphQLError("user not exist with such email..!!", {
-          extensions: {
-            code: 404,
-          },
-        });
+        return errorHandle("user not exist with such email..!!", 404);
       }
 
       return findUser;
     },
+
+    //*** query for find all user
 
     allUser: async () => {
       const findUser = await Register.find();
@@ -65,63 +55,51 @@ export default {
   },
 
   Mutation: {
-    // ***register user
+    // ***mutation for register user
 
     registerUser: async (_, { input }) => {
       const findUserName = await Register.findOne({ userName: input.userName });
 
       if (findUserName) {
-        throw new GraphQLError("Username already exist..!!", {
-          extensions: {
-            code: 403,
-          },
-        });
+        return errorHandle("Username already exist..!!", 403);
       }
 
       const findEmail = await Register.findOne({ email: input.email });
 
       if (findEmail) {
-        throw new GraphQLError("User already exist with this email..!!", {
-          extensions: {
-            code: 403,
-          },
-        });
+        return errorHandle("User already exist with this email..!!", 403);
       }
 
       const userProfileImage = await input.profilePicture;
 
+      //*** create regex for base64 so we get (data:image/png;base64) */
+
       const matches = userProfileImage.match(/^data:image\/([a-z]+);base64,/);
+
+      if (!matches) {
+        return errorHandle("Enter valid image..!!", 403);
+      }
+
+      // *** find extension
+
       const fileExtension = matches[1];
 
-      const fileType = userProfileImage.substring(
-        "data:".length,
-        userProfileImage.indexOf("/")
-      );
-
-      const regex = new RegExp(
-        `^data:${fileType}\/${fileExtension};base64,`,
-        "gi"
-      );
-      const base64Data = userProfileImage.replace(regex, "");
+      // *** createunique name of image
 
       const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
 
+      // *** image name with extension
+
       const newFileName = uniqueSuffix + "." + fileExtension;
 
-      const uploadPath = path.join(process.cwd(), "/public/uploads/");
-
-      if (!fs.existsSync(uploadPath)) {
-        fs.mkdirSync(uploadPath);
-      }
-
-      fs.writeFileSync(uploadPath + newFileName, base64Data, "base64");
+      imageUpload(input.profilePicture, fileExtension, newFileName);
 
       const hashpw = await bcrypt.hash(input.password, 12);
 
       const newUser = new Register({
         ...input,
         password: hashpw,
-        profilePicture: "http://localhost:4000/uploads/" + newFileName,
+        profilePicture: `${domain_url}${port}/uploads/` + newFileName,
       });
 
       const User = await newUser.save();
@@ -136,21 +114,13 @@ export default {
       // const findUser = await Register.findOne({ phoneno: input });
 
       // if (!findUser) {
-      //   throw new GraphQLError("User not exist with such mobile number..!!", {
-      //     extensions: {
-      //       code: 404,
-      //     },
-      //   });
+      // return errorHandle("User not exist with such mobile number..!!", 404);
       // }
 
       const findUser = await Register.findOne({ email: input.email });
 
       if (!findUser) {
-        throw new GraphQLError("user not exist with such email..!!", {
-          extensions: {
-            code: 404,
-          },
-        });
+        return errorHandle("user not exist with such email..!!", 404);
       }
 
       const verifyPassword = await bcrypt.compare(
@@ -159,11 +129,7 @@ export default {
       );
 
       if (!verifyPassword) {
-        throw new GraphQLError("email or password wrong..!!", {
-          extensions: {
-            code: 404,
-          },
-        });
+        return errorHandle("email or password wrong..!!", 404);
       }
 
       const payload = {
@@ -178,47 +144,29 @@ export default {
       return { token };
     },
 
+    //*** mutation for forgot password */
+
     forgetPassword: async (_, { email }) => {
       const findUser = await Register.findOne({ email: email });
 
       if (!findUser) {
-        throw new GraphQLError("user not exist with such email..!!", {
-          extensions: {
-            code: 404,
-          },
-        });
+        return errorHandle("user not exist with such email..!!", 404);
       }
 
       const userId = await findUser.id;
 
-      const payload = {
-        id: userId,
-        email: findUser.email,
-      };
-
-      const token = await jwt.sign(payload, secret_key, {
-        expiresIn: "24h",
-      });
-
-      const info = transporter.sendMail({
-        from: admin_email, // sender address
-        to: findUser.email, // list of receivers
-        subject: "new password...!!", // Subject line
-        html: `<a href="http://192.168.0.164:${client_port}/newpassword?token=${token}">Click here to reset-password</a>`,
-      });
+      sendMail(userId, findUser.email);
 
       return findUser;
     },
+
+    //*** mutation for new password */
 
     newPassword: async (_, { input, token }) => {
       const decode = await jwt.decode(token, secret_key);
 
       if (!decode) {
-        throw new GraphQLError("Invalid token", {
-          extensions: {
-            code: 404,
-          },
-        });
+        return errorHandle("Invalid token", 401);
       }
 
       const { id } = decode;
@@ -228,13 +176,9 @@ export default {
       const cnfPassword = input.newPassword === input.confirmPassword;
 
       if (!cnfPassword) {
-        throw new GraphQLError(
+        return errorHandle(
           "Your password and confirmation password do not match",
-          {
-            extensions: {
-              code: 401,
-            },
-          }
+          401
         );
       }
 
@@ -251,23 +195,14 @@ export default {
       return updatedPassword;
     },
 
+    //*** mutation for new updateuser profile */
+
     updateUserProfile: async (_, { input }) => {
       const findUser = await Register.findById(input.id);
 
       if (!findUser) {
-        throw new GraphQLError("invalid...", {
-          extensions: {
-            code: 404,
-          },
-        });
+        return errorHandle("Invalid user", 401);
       }
-
-      findUser.id = findUser.id;
-      findUser.userName = findUser.userName;
-      findUser.phoneno = findUser.phoneno;
-      findUser.email = findUser.email;
-      findUser.password = findUser.password;
-      findUser.profilePicture = findUser.profilePicture;
 
       if (input.userName) {
         findUser.userName = input.userName;
@@ -275,34 +210,29 @@ export default {
       if (input.profilePicture) {
         const userProfileImage = await input.profilePicture;
 
+        //*** create regex for base64 so we get (data:image/png;base64) */
+
         const matches = userProfileImage.match(/^data:image\/([a-z]+);base64,/);
+
+        if (!matches) {
+          return errorHandle("Enter valid image..!!", 403);
+        }
+
+        // *** find extension
+
         const fileExtension = matches[1];
 
-        const fileType = userProfileImage.substring(
-          "data:".length,
-          userProfileImage.indexOf("/")
-        );
-
-        const regex = new RegExp(
-          `^data:${fileType}\/${fileExtension};base64,`,
-          "gi"
-        );
-        const base64Data = userProfileImage.replace(regex, "");
+        // *** createunique name of image
 
         const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
 
+        // *** image name with extension
+
         const newFileName = uniqueSuffix + "." + fileExtension;
 
-        const uploadPath = path.join(process.cwd(), "/public/uploads/");
+        imageUpload(input.profilePicture, fileExtension, newFileName);
 
-        if (!fs.existsSync(uploadPath)) {
-          fs.mkdirSync(uploadPath);
-        }
-
-        fs.writeFileSync(uploadPath + newFileName, base64Data, "base64");
-
-        findUser.profilePicture =
-          "http://localhost:4000/uploads/" + newFileName;
+        findUser.profilePicture = `${domain_url}${port}/uploads/` + newFileName;
       }
 
       const newUser = await findUser.save();
@@ -314,6 +244,8 @@ export default {
       return newUser;
     },
   },
+
+  //*** subscripation */
 
   Subscription: {
     updateUserProfile: {
