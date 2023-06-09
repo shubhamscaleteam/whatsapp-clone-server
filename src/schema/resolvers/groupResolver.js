@@ -6,6 +6,8 @@ const pubsub = new PubSub();
 
 export default {
   Query: {
+    // *** user who is login all group
+
     userAllGroup: async (_, { userId }) => {
       const allGroups = await Group.find({ member: userId })
         .populate("creator")
@@ -14,6 +16,8 @@ export default {
       return allGroups;
     },
 
+    // *** group by id
+
     groupbyId: async (_, { reciverId }) => {
       const groupById = await Group.findById(reciverId)
         .populate("creator")
@@ -21,6 +25,8 @@ export default {
 
       return groupById;
     },
+
+    // *** group all message
 
     groupAllMessage: async (_, { reciverId, userId }) => {
       const groupAllMessage = await GroupMessage.find({
@@ -40,6 +46,8 @@ export default {
   },
 
   Mutation: {
+    // *** create group
+
     createGroupOfUser: async (_, { input }) => {
       const groupData = await Group.create(input);
 
@@ -49,6 +57,8 @@ export default {
 
       return groupData;
     },
+
+    // *** create group message
 
     createGroupMessage: async (_, { input }) => {
       const groupMessage = await GroupMessage.create(input);
@@ -60,8 +70,9 @@ export default {
       return groupMessage;
     },
 
-    deleteGroupMessage: async (_, { input }) => {
+    // *** delete group message
 
+    deleteGroupMessage: async (_, { input }) => {
       await GroupMessage.updateMany(
         {
           _id: { $in: input.messageId },
@@ -76,6 +87,8 @@ export default {
       };
     },
   },
+
+  // *** subscripation
 
   Subscription: {
     groupMessageCreated: {

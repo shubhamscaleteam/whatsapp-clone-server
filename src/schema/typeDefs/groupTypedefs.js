@@ -40,7 +40,6 @@ type GroupMessage {
     isread:Boolean
 }
 
-
 input Group {
     userName: String!
     creator:ID
